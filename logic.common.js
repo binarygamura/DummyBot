@@ -2,7 +2,7 @@
 
 module.exports = (function(){
     
-    var harvestEnergy = function(creep, source){
+    var harvestEnergy = (creep, source) => {
         if(!source){
             var sources = creep.room.find(FIND_SOURCES);
             if(sources.length > 0){

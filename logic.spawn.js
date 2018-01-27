@@ -1,7 +1,7 @@
 
-module.exports = (function(){
+module.exports = (() => {
     
-    var generatePopulationStats = function(){
+    var generatePopulationStats = () => {
         
         var stats = {
             roleStats: {
@@ -37,7 +37,7 @@ module.exports = (function(){
     
     
     
-    var simpleSpawnStrategy = function(spawn){
+    var simpleSpawnStrategy = (spawn) => {
         
         if(!spawn.memory.sources) {                              
             spawn.memory.sources = {};

@@ -1,7 +1,7 @@
 var behaviour = require('logic.common');
 
 module.exports = {
-    run: function(creep){
+    run: (creep) => {
         
         
         if(creep.memory.upgrading && creep.carry.energy === 0){

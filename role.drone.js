@@ -1,5 +1,5 @@
 module.exports = {
-    run: function(creep){
+    run: (creep) => {
         
         var enemy = creep.pos.findClosestByPath(FIND_HOSTILE_CREEPS);
         if(enemy) {

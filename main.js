@@ -7,7 +7,7 @@ var spawnLogic = require('logic.spawn');
 
 var Util = require('util.common');
 
-module.exports.loop = function() {
+module.exports.loop = () => {
     
     Util.clearMemory();
     

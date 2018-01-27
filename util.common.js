@@ -1,12 +1,6 @@
-/* 
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
-module.exports = (function(){
+module.exports = (() => {
     
-    var clearMemory = function(){
+    var clearMemory = () => {
         for(var name in Memory.creeps){
             if(!Game.creeps[name]){
                 if(Memory.creeps[name].role){
@@ -23,9 +17,6 @@ module.exports = (function(){
                 }
 
                 delete Memory.creeps[name];
-//                _.forEach(Game.spawns, (value, key) => {
-//                    
-//                });
             }
         }
     };
