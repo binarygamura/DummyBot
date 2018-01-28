@@ -1,3 +1,5 @@
+
+//include logic for all roles.
 var roles = {
     harvester: require('role.harvester'),
     upgrader: require('role.upgrader'),
@@ -7,14 +9,13 @@ var roles = {
 }
 
 var spawnLogic = require('logic.spawn');
-var Util = require('util.common');
-
-
+//var Util = require('util.common');
 
 
 module.exports.loop = (() => {
     
-    
+    //delete memory used by died creeps. run the "cleanUp" method for
+    //each creep depending on the role it had.
     var cleanUp = () => {
         for(var name in Memory.creeps){
             if(!Game.creeps[name]){
@@ -35,16 +36,20 @@ module.exports.loop = (() => {
         }
     };
     
+    //iterate over every spawn
     var runSpawns = () => {
         for(var spawnName in Game.spawns){
-            spawnLogic.simpleSpawnStrategy(Game.spawns[spawnName]);
+            spawnLogic.simpleSpawnStrategy(Game.spawns[spawnName], roles);
         }
     };
     
     //iterate over every creep and run its logic based on its role.
-    var runCreeps =() => {
+    var runCreeps = () => {
         for( var creepName in Game.creeps){
             var creep = Game.creeps[creepName];
+            if(!creep.my){
+                continue;
+            }
             if(!creep.memory.role){
                 console.log('creep '+creep.name+' has no role assigned!');
                 continue;
@@ -57,8 +62,11 @@ module.exports.loop = (() => {
         }
     };
     
+    //return the game loop function. this one is called every game tick.
     return () => {
-        cleanUp();
+        //only run the cleanup code every 5 cycles.
+        if(Game.time % 5 === 0)
+            cleanUp();
         runSpawns();
         runCreeps();
     };

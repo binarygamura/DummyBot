@@ -1,54 +1,66 @@
 
 module.exports = (() => {
     
-    var generatePopulationStats = () => {
+    /**
+     * Generate some statistics about the creeps polulation.
+     * This function should only be called once per tick, best directly at
+     * the beginning of the game loop.
+     */
+    var generatePopulationStats = (roles) => {
         
         var stats = {
             roleStats: {
-                builder: 0,
-                harvester: 0,
-                upgrader: 0,
-                drone: 0,
-                repair: 0,
                 other: 0
-            },
+            }, 
             total: 0
         };
-        
-        for(var name in Game.creeps) {
-            var creep = Game.creeps[name];
-            if(creep.memory.role){
-                var role = !_.isUndefined(stats.roleStats[creep.memory.role]) ? creep.memory.role : 'other';
-                stats.roleStats[role]++;
-            }
-            
-        }
+        _.keys(roles).forEach((roleName) => {
+            stats.roleStats[roleName] = 0;
+        });
+                
+        _.filter(Game.creeps, (creep) => creep.my).forEach((creep) => {
+           if(creep.memory.role) {               
+               var role = !_.isUndefined(stats.roleStats[creep.memory.role]) ? creep.memory.role : 'other';
+               stats.roleStats[role]++;
+               stats.total++;               
+           }
+        });
         console.log(JSON.stringify(stats));
-        
-        stats.total = stats.roleStats.builder 
-                + stats.roleStats.harvester 
-                + stats.roleStats.upgrader
-                + stats.roleStats.drone
-                + stats.roleStats.repair
-                + stats.roleStats.other;
         return stats;
     };
     
+    var getMaxBody = (parts, maxEnergy) => {
+        var energy = 0;
+        _.takeWhile(parts, (part) => {
+            if(!BODYPART_COST[part]){
+                console.log('unable to get energy costs for part '+part);
+                return false;
+            }
+            var cost = BODYPART_COST[part];
+            if(energy + cost > maxEnergy){
+                return false;
+            }
+            energy += cost;
+            return true;
+        });
+    };
     
     
-    
-    var simpleSpawnStrategy = (spawn) => {
+    var simpleSpawnStrategy = (spawn, roles) => {
         
-        if(!spawn.memory.sources) {                              
+        //initialize the memory of the source at the start of its life cycle.
+        if(!spawn.memory.sources) {
+            //assign at most two sources within the room to this spawn.
             spawn.memory.sources = {};
             var sources = spawn.room.find(FIND_SOURCES);
             if(sources.length){
+                //sort the list of sources by distance.
                 _.sortBy(sources, (source) => {
                     var path = PathFinder.search(source, spawn);
                     return (!path || path.incomplete) ? 2000 : path.cost;
                 });
             };
-            
+            //take to two nearest resource sources.
             _.take(sources, 2).forEach((source) => {
                 spawn.memory.sources[source.id] = [];
             });            
@@ -70,11 +82,10 @@ module.exports = (() => {
             }
         }        
         
-        var stats = generatePopulationStats();
+        var stats = generatePopulationStats(roles);
         
         
         if(!creepToSpawn){
-            
             if(stats.roleStats.builder < 4) {            
                 creepToSpawn = creepToSpawn = {
                         role: 'builder', 
@@ -84,7 +95,6 @@ module.exports = (() => {
         
         
          if(!creepToSpawn){
-            
             if(stats.roleStats.upgrader < 2) {            
                 creepToSpawn = creepToSpawn = {
                         role: 'upgrader', 
@@ -93,7 +103,6 @@ module.exports = (() => {
         }
         
         if(!creepToSpawn){
-            
             if(stats.roleStats.drone < 6) {            
                 creepToSpawn = creepToSpawn = {
                         role: 'drone', 
@@ -102,7 +111,6 @@ module.exports = (() => {
         }
         
         if(!creepToSpawn){
-            
             if(stats.roleStats.repair < 2) {            
                 creepToSpawn = creepToSpawn = {
                         role: 'repair', 

@@ -14,7 +14,11 @@ module.exports = (() => {
                 }
             }
             else {
-                creep.moveTo(Game.flags['Army']);
+                if(Game.flags['Army']){
+                    return creep.moveTo(Game.flags['Army']);
+                }
+                console.log('unable to move army. pls create a flag "Army" to avoid getting your spawn clogged by creeps.');
+                
             }
         }
     }

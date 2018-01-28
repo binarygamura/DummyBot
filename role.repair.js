@@ -5,6 +5,8 @@ module.exports = (() => {
     
     return {
         
+        priority: 1,
+        
         cleanUp: (creep) => {
     
         },
@@ -22,7 +24,7 @@ module.exports = (() => {
             if(creep.memory.repair){
                 
                 var damagedStructures = creep.room.find(FIND_STRUCTURES, {
-                    filter: (structure) => structure.hits < structure.hitsMax && (structure.structureType != STRUCTURE_CONTROLLER)
+                    filter: (structure) => structure.hits < structure.hitsMax && (structure.structureType !== STRUCTURE_CONTROLLER)
                 });
                 if(damagedStructures.length){
                     if(creep.repair(damagedStructures[0]) === ERR_NOT_IN_RANGE) {

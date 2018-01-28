@@ -3,6 +3,7 @@ var behaviour = require('logic.common');
 module.exports = (() => {
     
     return {
+        
         cleanUp: (creep) => {
 
         },
@@ -21,6 +22,9 @@ module.exports = (() => {
                     if(creep.build(constructionSite) === ERR_NOT_IN_RANGE) {                    
                         creep.moveTo(constructionSite);
                     }
+                }
+                else {
+                    
                 }
             }
             else {

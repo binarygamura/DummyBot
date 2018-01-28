@@ -3,11 +3,17 @@ var behaviour = require('logic.common');
 module.exports = (() => {
     
     return {
+        
+        getBestCreep: () => {
+            return [MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK];
+        },
+        
         cleanUp: (creepName) => {
             console.log('a harvester has died!');
             if(!Memory.creeps[creepName].spawnId){
                 return;
-            }            
+            }
+            //remove the died creep from its assoc. table (creep -> energy source)
             var parentSpawn = Game.getObjectById(Memory.creeps[creepName].spawnId);
             var test = parentSpawn.memory.sources[Memory.creeps[creepName].sourceId];
             parentSpawn.memory.sources[Memory.creeps[creepName].sourceId] = test.filter((e) => {
