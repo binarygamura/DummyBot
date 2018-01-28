@@ -10,7 +10,7 @@ module.exports = (() => {
                             var parentSpawn = Game.getObjectById(Memory.creeps[name].spawnId);
                             var test = parentSpawn.memory.sources[Memory.creeps[name].sourceId];
                             parentSpawn.memory.sources[Memory.creeps[name].sourceId] = test.filter((e) => {
-                                return e != name;
+                                return e !== name;
                             });
                             break;
                     }

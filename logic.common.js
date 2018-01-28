@@ -1,6 +1,6 @@
 
 
-module.exports = (function(){
+module.exports = (() => {
     
     var harvestEnergy = (creep, source) => {
         if(!source){

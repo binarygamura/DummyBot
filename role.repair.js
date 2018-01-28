@@ -2,7 +2,13 @@ var behaviour = require('logic.common');
 
 
 module.exports = (() => {
+    
     return {
+        
+        cleanUp: (creep) => {
+    
+        },
+        
         run: (creep) => {
             if(creep.memory.repair && creep.carry.energy === 0){
                 creep.memory.repair = false;

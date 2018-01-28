@@ -46,7 +46,6 @@ module.exports = (() => {
                 _.sortBy(sources, (source) => {
                     var path = PathFinder.search(source, spawn);
                     return (!path || path.incomplete) ? 2000 : path.cost;
-//                    return 0;
                 });
             };
             
