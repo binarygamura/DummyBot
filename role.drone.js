@@ -1,6 +1,11 @@
 module.exports = (() => {
     
     return {
+        
+        getBestCreep: () => {
+            return [MOVE, ATTACK, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK];
+        },
+        
         cleanUp: (creep) => {
 
         },

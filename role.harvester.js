@@ -22,7 +22,8 @@ module.exports = (() => {
         },
 
         run: (creep) => {
-
+            
+            //initialize creep. assign us to the source (into the spawns memory).
             if(!creep.spawning && !creep.memory.init && creep.memory.spawnId ){
                 var spawn = Game.getObjectById(creep.memory.spawnId);
                 spawn.memory.sources[creep.memory.sourceId].push(creep.name);
@@ -31,18 +32,18 @@ module.exports = (() => {
             }
 
 
+            //if the harvester travels across a field without a road, he 
+            //should create a construction site.
             var structures = creep.room.lookAt(creep.pos);
-
-            var roadsBelow = _.filter(structures, {
-                filter: (structure) =>  structure.type === 'structure' && structure.structure.structureType === STRUCTURE_ROAD
-            });
+            var roadsBelow = _.some(structures, (structure) => structure.type === 'structure' && structure.structure.structureType === STRUCTURE_ROAD);
             var constructionSites = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
 
-            if(!creep.spawning && roadsBelow.length === 0 && constructionSites.length < 3) {
+            //but only create a construction site if we dont built too
+            //much already.
+            if(!creep.spawning && roadsBelow === 0 && constructionSites.length < 3) {
                 creep.room.createConstructionSite(creep.pos, STRUCTURE_ROAD);
             }
-
-
+            
             if(creep.carry.energy < creep.carryCapacity) {
                 behaviour.harvestEnergy(creep, Game.getObjectById(creep.memory.sourceId));
             }
@@ -55,10 +56,11 @@ module.exports = (() => {
 
                 if(targets.length === 0){
                     var extensions = creep.room.find(FIND_STRUCTURES, {
-                        filter: (extension) => extension.energy < extension.energyCapacity && extension.structureType === STRUCTURE_EXTENSION
+                        filter: (extension) => extension.energy < extension.energyCapacity && 
+                                (extension.structureType === STRUCTURE_EXTENSION || extension.structureType === STRUCTURE_TOWER)
                     });
                     if(extensions.length){
-                        console.log('found a extension needing energy!');
+                        creep.say('🔌');
                         targets.push(extensions[0]);
                     }
                 }

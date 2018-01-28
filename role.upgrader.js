@@ -2,6 +2,11 @@ var behaviour = require('logic.common');
 
 module.exports = (() => {
     return {
+        
+        getBestCreep: () => {
+            return [MOVE, WORK, CARRY, WORK, MOVE, WORK, CARRY, WORK, MOVE, WORK, CARRY, WORK];
+        },
+        
         cleanUp: (creep) => {
         },
     

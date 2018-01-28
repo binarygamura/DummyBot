@@ -1,12 +1,14 @@
 
 module.exports = (() => {
     
+    const SPAWN_WORKERS_PER_SOURCE = 3;
+    
     /**
      * Generate some statistics about the creeps polulation.
      * This function should only be called once per tick, best directly at
      * the beginning of the game loop.
      */
-    var generatePopulationStats = (roles) => {
+    var generatePopulationStats = (roles, spawn) => {
         
         var stats = {
             roleStats: {
@@ -18,20 +20,20 @@ module.exports = (() => {
             stats.roleStats[roleName] = 0;
         });
                 
-        _.filter(Game.creeps, (creep) => creep.my).forEach((creep) => {
-           if(creep.memory.role) {               
-               var role = !_.isUndefined(stats.roleStats[creep.memory.role]) ? creep.memory.role : 'other';
-               stats.roleStats[role]++;
-               stats.total++;               
-           }
-        });
-        console.log(JSON.stringify(stats));
+        _.filter(Game.creeps, (creep) => creep.my && (!spawn || (spawn.id === creep.memory.spawnId)))
+            .forEach((creep) => {
+                if(creep.memory.role) {               
+                    var role = !_.isUndefined(stats.roleStats[creep.memory.role]) ? creep.memory.role : 'other';
+                    stats.roleStats[role]++;
+                    stats.total++;               
+                }
+             });
         return stats;
     };
     
     var getMaxBody = (parts, maxEnergy) => {
         var energy = 0;
-        _.takeWhile(parts, (part) => {
+        return _.takeWhile(parts, (part) => {
             if(!BODYPART_COST[part]){
                 console.log('unable to get energy costs for part '+part);
                 return false;
@@ -46,7 +48,39 @@ module.exports = (() => {
     };
     
     
+    var getNextCandiateRole = (spawn, stats) => {
+        //first create some harvesters for each energy resource.
+        for(var sourceId in spawn.memory.sources){
+            
+            var harvesters = spawn.memory.sources[sourceId];
+            if(harvesters.length < Game.botConfig.spawns.harvesterPerSource){
+                return nextRole = 'harvester';
+            }
+        }
+        
+        //Go through the predefined limits of creeps per spawn (see config.js)
+        //Calculate for each role the number of creeps to spawn.
+        var needed = _.mapValues(Game.botConfig.spawns.prefs, (min, key) => Math.max(0, min - stats.roleStats[key]));
+        
+        //filter out 'others' and 'harvesters' since we already handled harvesters
+        //above.
+        var nextRole = false;
+        needed = _.omit(needed, ['other', 'harvester']);
+        console.log("current: ",JSON.stringify(stats));
+        console.log("needed: ",JSON.stringify(needed));
+        _.find(needed, (value, key) => {
+            if(value > 0) {
+                nextRole = key;
+                return true;
+            }
+            return false;
+        });
+        
+        return nextRole;
+    };
+    
     var simpleSpawnStrategy = (spawn, roles) => {
+        
         
         //initialize the memory of the source at the start of its life cycle.
         if(!spawn.memory.sources) {
@@ -66,67 +100,38 @@ module.exports = (() => {
             });            
         }
         
-        var creepToSpawn = null;
+        //dont bother about the next creep while spawning or being low on energy.
+        if(spawn.spawning || spawn.room.energyCapacityAvailable > spawn.room.energyAvailable) {
+            return;
+        }
         
-        for(var sourceId in spawn.memory.sources){
+        var nextRole = getNextCandiateRole(spawn, generatePopulationStats(roles, spawn));
+        
+        
+        if(nextRole){
+            var nextCreep = {
+                spawnId: spawn.id,
+                body: getMaxBody(roles[nextRole].getBestCreep(), spawn.room.energyAvailable),
+                role: nextRole
+            };
             
-            var harvesters = spawn.memory.sources[sourceId];
-            if(harvesters.length < 3){
-                creepToSpawn = {
-                    role: 'harvester', 
-                    sourceId: sourceId, 
-                    spawnId: spawn.id, 
-                    init: false,
-                    body: [WORK, CARRY, MOVE, WORK]};
-                break;
+            if(nextRole === 'harvester') {                
+                for(var sourceId in spawn.memory.sources){            
+                    var harvesters = spawn.memory.sources[sourceId];
+                    if(harvesters.length < 3){
+                        nextCreep.sourceId =  sourceId;
+                        nextCreep.init = false;
+                        break;
+                    }
+                }     
             }
-        }        
-        
-        var stats = generatePopulationStats(roles);
-        
-        
-        if(!creepToSpawn){
-            if(stats.roleStats.builder < 4) {            
-                creepToSpawn = creepToSpawn = {
-                        role: 'builder', 
-                        body: [WORK, CARRY, MOVE, WORK]};
-                }
-        }
-        
-        
-         if(!creepToSpawn){
-            if(stats.roleStats.upgrader < 2) {            
-                creepToSpawn = creepToSpawn = {
-                        role: 'upgrader', 
-                        body: [WORK, CARRY, MOVE, WORK]};
-                }
-        }
-        
-        if(!creepToSpawn){
-            if(stats.roleStats.drone < 6) {            
-                creepToSpawn = creepToSpawn = {
-                        role: 'drone', 
-                        body: [ATTACK, ATTACK, MOVE, MOVE]};
-                }
-        }
-        
-        if(!creepToSpawn){
-            if(stats.roleStats.repair < 2) {            
-                creepToSpawn = creepToSpawn = {
-                        role: 'repair', 
-                        body: [WORK, CARRY, MOVE, WORK]};
-                }
-        }
-        
-        
-        if(spawn.energy === spawn.energyCapacity && creepToSpawn) {
             
-            var name = spawn.spawnCreep(creepToSpawn.body, creepToSpawn.role+"_"+Game.time,{memory: _.pick(creepToSpawn, ['role', 'sourceId', 'spawnId'])});
+            var name = spawn.spawnCreep(nextCreep.body, nextCreep.role+'_'+Game.time,{memory: _.omit(nextCreep, ['body'])});
             if(!(name < 0)){
-                console.log("created new spawn!");
+                console.log('spawned new creep "'+name+'"');
             }
             else {
-                console.log("failed! "+name);
+                console.log('failed to spawn creep error='+name, JSON.stringify(nextCreep));
             }
         }
     };

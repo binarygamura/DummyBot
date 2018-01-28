@@ -9,6 +9,8 @@ var roles = {
 }
 
 var spawnLogic = require('logic.spawn');
+var towerLogic = require('logic.tower').handleTowers;
+var config = require('config');
 //var Util = require('util.common');
 
 
@@ -64,10 +66,14 @@ module.exports.loop = (() => {
     
     //return the game loop function. this one is called every game tick.
     return () => {
+        //set the 
+        Game.botConfig = config;
         //only run the cleanup code every 5 cycles.
         if(Game.time % 5 === 0)
             cleanUp();
+        towerLogic();
         runSpawns();
         runCreeps();
+        
     };
 })();

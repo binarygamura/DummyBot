@@ -5,7 +5,9 @@ module.exports = (() => {
     
     return {
         
-        priority: 1,
+        getBestCreep: () => {
+            return [MOVE, WORK, CARRY, WORK, MOVE, WORK, CARRY, WORK, MOVE, WORK, CARRY, WORK];
+        },
         
         cleanUp: (creep) => {
     

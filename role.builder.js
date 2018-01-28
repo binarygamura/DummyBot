@@ -4,6 +4,10 @@ module.exports = (() => {
     
     return {
         
+        getBestCreep: () => {
+            return [MOVE, WORK, CARRY, WORK, MOVE, WORK, CARRY, WORK, MOVE, WORK, CARRY, WORK];
+        },
+        
         cleanUp: (creep) => {
 
         },
@@ -24,7 +28,21 @@ module.exports = (() => {
                     }
                 }
                 else {
-                    
+                    var extensions = creep.room.find(FIND_STRUCTURES, {
+                        filter: (extension) => extension.energy < extension.energyCapacity && 
+                                (extension.structureType === STRUCTURE_EXTENSION)
+                    });
+                    if(extensions.length){
+                        creep.say('🔌+');
+                        if(creep.transfer(extensions[0], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {                    
+                            creep.moveTo(extensions[0]);
+                        }
+                    }
+                    else {
+                         if(creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) {
+                            creep.moveTo(creep.room.controller);
+                        }
+                    }
                 }
             }
             else {
