@@ -1,11 +1,139 @@
-var behaviour = require('logic.common');
+var common = require('logic.common');
 
 module.exports = (() => {
+    
+    const STATE_HARVESTING = 'harvesting';
+    
+    const STATE_MOVE_TO_DEST = 'destination';
+    
+    const STATE_TRANSFER = 'transfer';
+    
+    const HARVEST_PRIOS = [STRUCTURE_SPAWN, STRUCTURE_EXTENSION, STRUCTURE_TOWER ];
+    
+    var findBestEnergyTarget = function(creep) {
+        var spawn = Game.getObjectById(creep.memory.spawnId);
+        if(spawn.energy < spawn.energyCapacity) {
+            return spawn;
+        }
+        var target = false;
+        var energyConsumers = creep.room.find(FIND_MY_STRUCTURES, {filter: (structure) => 
+            structure.my &&
+            (structure.energy < structure.energyCapacity) && 
+            (structure.structureType === STRUCTURE_TOWER  || 
+            structure.structureType === STRUCTURE_EXTENSION)
+        });
+        if(energyConsumers && energyConsumers.length > 0){
+            var structures = _.groupBy(energyConsumers, (consumer) => consumer.structureType);
+            _.forEach(HARVEST_PRIOS, (structureType) => {
+                if(structures[structureType]) {
+                    var temp = _.sortBy(structures[structureType], (structure) => structure.energy - structure.energyCapacity);
+                    if(temp.length > 0){
+                        target = temp[0];
+                        return false;
+                    }                    
+                }                
+            });
+        }
+        if(!target) {
+            target = creep.room.controller;
+        }
+        return target;
+    };
+    
+    var run2 = (creep) => {
+        
+        //initialize creep. assign it to the source (into the spawns memory).        
+        if(!creep.spawning && !creep.memory.init && creep.memory.spawnId ){
+            var spawn = Game.getObjectById(creep.memory.spawnId);
+            spawn.memory.sources[creep.memory.sourceId].push(creep.name);
+            creep.memory.init = true;
+            creep.memory.id = creep.id;
+        }
+
+        creep.memory.state = creep.memory.state || STATE_HARVESTING;
+        
+        //if the harvester travels across a field without a road, he 
+        //should create a construction site.
+        var structures = creep.room.lookAt(creep.pos);
+        var roadsBelow = _.some(structures, (structure) => structure.type === 'structure' && structure.structure.structureType === STRUCTURE_ROAD);
+        var constructionSites = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
+
+        //but only create a construction site if we dont built too
+        //much already.
+        if(!creep.spawning && !roadsBelow  && constructionSites.length < 3) {
+            console.log('created new road construction site at ('+creep.pos.x+'/'+creep.pos.y+')');
+            creep.room.createConstructionSite(creep.pos, STRUCTURE_ROAD);
+        }
+        
+        switch(creep.memory.state) {
+            case STATE_HARVESTING:
+                if(creep.carry.energy === creep.carryCapacity) {
+                    delete creep.memory.target;
+                    creep.memory.state = STATE_MOVE_TO_DEST;
+                }
+                else {
+                    if(!creep.memory.target) {
+                        var bestSource = Game.getObjectById(creep.memory.sourceId);
+                        if(bestSource.energy === 0) {
+                            bestSource = false;
+                            var temp = creep.room.find(FIND_SOURCES_ACTIVE);
+                            if(temp.length) {
+                                bestSource = temp[0];
+                            }
+                        }
+                        if(bestSource) {
+                            creep.memory.target = bestSource.id;
+                        }
+                    }
+                    if(creep.memory.target) {
+                        var resource = Game.getObjectById(creep.memory.target);
+                        if(resource.energy > 0) {
+                            var result = creep.harvest(resource, RESOURCE_ENERGY);
+                            if(result === ERR_NOT_IN_RANGE){
+                                creep.moveTo(resource); //, {visualizePathStyle: {stroke: '#009933', opacity: 1}} );
+                            }
+                        }
+                        else {
+                            delete creep.memory.target;
+                        }
+                    }
+                }
+                break;
+            case STATE_MOVE_TO_DEST:
+                if(creep.carry.energy === 0) {
+                    creep.memory.state = STATE_HARVESTING;
+                    delete creep.memory.target;
+                }
+                else {
+                    var target;
+                    if(!creep.memory.target){
+                        target = findBestEnergyTarget(creep);
+                        common.debug(creep, 'finding next destination!');
+                        if(target){                            
+                            creep.memory.target  = target.id;
+                            common.debug(creep, 'set new target!');
+                        }
+                    }
+                    if(creep.memory.target) {
+                        target = target || Game.getObjectById(creep.memory.target);
+                        var result = creep.transfer(target, RESOURCE_ENERGY);
+                        if(result === ERR_NOT_IN_RANGE) {
+                            //{visualizePathStyle: {stroke: '#dc143c', opacity: 1}}
+                            creep.moveTo(target);
+                        }
+                        else if(result === ERR_FULL) {
+                            delete creep.memory.target;
+                        }
+                    }
+                }                    
+                break;
+        }
+    };
     
     return {
         
         getBestCreep: () => {
-            return [MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK];
+            return [MOVE, CARRY, WORK, MOVE, CARRY, WORK, MOVE, CARRY, WORK, CARRY, WORK, CARRY, WORK];
         },
         
         cleanUp: (creepName) => {
@@ -21,61 +149,6 @@ module.exports = (() => {
             });
         },
 
-        run: (creep) => {
-            
-            //initialize creep. assign us to the source (into the spawns memory).
-            if(!creep.spawning && !creep.memory.init && creep.memory.spawnId ){
-                var spawn = Game.getObjectById(creep.memory.spawnId);
-                spawn.memory.sources[creep.memory.sourceId].push(creep.name);
-                creep.memory.init = true;
-                creep.memory.id = creep.id;
-            }
-
-
-            //if the harvester travels across a field without a road, he 
-            //should create a construction site.
-            var structures = creep.room.lookAt(creep.pos);
-            var roadsBelow = _.some(structures, (structure) => structure.type === 'structure' && structure.structure.structureType === STRUCTURE_ROAD);
-            var constructionSites = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
-
-            //but only create a construction site if we dont built too
-            //much already.
-            if(!creep.spawning && roadsBelow === 0 && constructionSites.length < 3) {
-                creep.room.createConstructionSite(creep.pos, STRUCTURE_ROAD);
-            }
-            
-            if(creep.carry.energy < creep.carryCapacity) {
-                behaviour.harvestEnergy(creep, Game.getObjectById(creep.memory.sourceId));
-            }
-            else {
-                var targets = [];
-                var spawn = Game.getObjectById(creep.memory.spawnId);
-                if(spawn.energy < spawn.energyCapacity) {
-                    targets.push(spawn);
-                }
-
-                if(targets.length === 0){
-                    var extensions = creep.room.find(FIND_STRUCTURES, {
-                        filter: (extension) => extension.energy < extension.energyCapacity && 
-                                (extension.structureType === STRUCTURE_EXTENSION || extension.structureType === STRUCTURE_TOWER)
-                    });
-                    if(extensions.length){
-                        creep.say('🔌');
-                        targets.push(extensions[0]);
-                    }
-                }
-
-                if(targets.length > 0){
-                    if(creep.transfer(targets[0], RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(targets[0]);
-                    }
-                }
-                else {
-                    if(creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(creep.room.controller);
-                    }
-                }
-            }
-        }
+        run: run2
     }
 })();

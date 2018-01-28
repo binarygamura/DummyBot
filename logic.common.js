@@ -2,6 +2,13 @@
 
 module.exports = (() => {
     
+    
+    var debug = (creep, message) => {
+        if(creep && creep.memory.debug) {
+            console.log(creep.name+": "+message);
+        }
+    };
+    
     var harvestEnergy = (creep, source) => {
         if(!source){
             var sources = creep.room.find(FIND_SOURCES);
@@ -16,7 +23,8 @@ module.exports = (() => {
     };
     
     return {
-        harvestEnergy: harvestEnergy
+        harvestEnergy: harvestEnergy,
+        debug: debug
     };
 })();
 

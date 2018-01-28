@@ -1,8 +1,6 @@
 
 module.exports = (() => {
     
-    const SPAWN_WORKERS_PER_SOURCE = 3;
-    
     /**
      * Generate some statistics about the creeps polulation.
      * This function should only be called once per tick, best directly at
@@ -35,7 +33,7 @@ module.exports = (() => {
         var energy = 0;
         return _.takeWhile(parts, (part) => {
             if(!BODYPART_COST[part]){
-                console.log('unable to get energy costs for part '+part);
+                console.log('unable to get energy cost for part '+part);
                 return false;
             }
             var cost = BODYPART_COST[part];
@@ -118,7 +116,7 @@ module.exports = (() => {
             if(nextRole === 'harvester') {                
                 for(var sourceId in spawn.memory.sources){            
                     var harvesters = spawn.memory.sources[sourceId];
-                    if(harvesters.length < 3){
+                    if(harvesters.length < Game.botConfig.spawns.harvesterPerSource){
                         nextCreep.sourceId =  sourceId;
                         nextCreep.init = false;
                         break;
