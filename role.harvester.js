@@ -25,6 +25,7 @@ module.exports = (() => {
         if(energyConsumers && energyConsumers.length > 0){
             var structures = _.groupBy(energyConsumers, (consumer) => consumer.structureType);
             _.forEach(HARVEST_PRIOS, (structureType) => {
+                common.debug(creep, 'checking '+structureType);
                 if(structures[structureType]) {
                     var temp = _.sortBy(structures[structureType], (structure) => structure.energy - structure.energyCapacity);
                     if(temp.length > 0){
@@ -34,7 +35,7 @@ module.exports = (() => {
                 }                
             });
         }
-        if(!target) {
+        if(!target) {            
             target = creep.room.controller;
         }
         return target;
@@ -73,6 +74,7 @@ module.exports = (() => {
                 }
                 else {
                     if(!creep.memory.target) {
+                        common.debug(creep, 'setting new target');
                         var bestSource = Game.getObjectById(creep.memory.sourceId);
                         if(bestSource.energy === 0) {
                             bestSource = false;
@@ -111,18 +113,24 @@ module.exports = (() => {
                         common.debug(creep, 'finding next destination!');
                         if(target){                            
                             creep.memory.target  = target.id;
-                            common.debug(creep, 'set new target!');
+                            common.debug(creep, 'set new target to '+target.id);
                         }
                     }
                     if(creep.memory.target) {
                         target = target || Game.getObjectById(creep.memory.target);
-                        var result = creep.transfer(target, RESOURCE_ENERGY);
-                        if(result === ERR_NOT_IN_RANGE) {
-                            //{visualizePathStyle: {stroke: '#dc143c', opacity: 1}}
-                            creep.moveTo(target);
-                        }
-                        else if(result === ERR_FULL) {
+                        if(target.energy === target.energyCapacity && (target.structureType !== STRUCTURE_CONTROLLER)){
+                            common.debug(creep, 'target is full!'+target.id);
                             delete creep.memory.target;
+                        }
+                        else {
+                            var result = creep.transfer(target, RESOURCE_ENERGY);
+                            if(result === ERR_NOT_IN_RANGE) {
+                                //{visualizePathStyle: {stroke: '#dc143c', opacity: 1}}
+                                creep.moveTo(target);
+                            }
+                            else if(result === ERR_FULL) {
+                                delete creep.memory.target;
+                            }
                         }
                     }
                 }                    

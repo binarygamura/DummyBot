@@ -11,7 +11,7 @@ module.exports = (() => {
     
     var harvestEnergy = (creep, source) => {
         if(!source){
-            var sources = creep.room.find(FIND_SOURCES);
+            var sources = creep.room.find(FIND_SOURCES_ACTIVE);
             if(sources.length > 0){
                 source = sources[0];
             }

@@ -3,9 +3,9 @@ module.exports = Object.freeze({
     spawns: {
         harvesterPerSource: 2,
         prefs: {            
-            builder: 3,
-            upgrader: 2,
-            repair: 2,
+            builder: 2,
+            upgrader: 1,
+            repair: 1,
             drone: 3
         }
     }

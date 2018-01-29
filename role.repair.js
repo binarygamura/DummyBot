@@ -39,7 +39,7 @@ module.exports = (() => {
                 }            
             }
             if(!creep.memory.repair) {
-                var source = creep.pos.findClosestByPath(FIND_SOURCES);
+                var source = creep.pos.findClosestByPath(FIND_SOURCES_ACTIVE);
                 behaviour.harvestEnergy(creep, source);
             }
         }
