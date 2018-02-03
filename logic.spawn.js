@@ -80,6 +80,10 @@ module.exports = (() => {
     var simpleSpawnStrategy = (spawn, roles) => {
         
         
+        if(!spawn.memory.neighbours) {
+            spawn.memory.neighbours = {};
+        }
+        
         //initialize the memory of the source at the start of its life cycle.
         if(!spawn.memory.sources) {
             //assign at most two sources within the room to this spawn.

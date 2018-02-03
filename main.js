@@ -5,7 +5,8 @@ var roles = {
     upgrader: require('role.upgrader'),
     builder: require('role.builder'),
     repair: require('role.repair'),
-    drone: require('role.drone')
+    drone: require('role.drone'),
+    longRange: require('role.longrange')
 }
 
 var spawnLogic = require('logic.spawn');
